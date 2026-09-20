@@ -1,9 +1,35 @@
-import { createAgentSession, SessionManager } from '@earendil-works/pi-coding-agent';
+import path from 'node:path';
+import { createAgentSession, ModelRuntime, SessionManager } from '@earendil-works/pi-coding-agent';
 import type { AgentRequest, AgentResult } from '../../models/agent';
 import type { AgentState, Decision, ModelPort } from './ports';
 
 export function isPiAdapterConfigured(): boolean {
-  return process.env.AI_MODE === 'real' && Boolean(process.env.PI_MODEL);
+  return process.env.AI_MODE === 'real'
+    && Boolean(process.env.PI_PROVIDER)
+    && Boolean(process.env.PI_MODEL)
+    && Boolean(process.env.PI_API_KEY);
+}
+
+export function resolvePiModelId(provider: string, modelId: string): string {
+  if (provider === 'deepseek' && modelId === 'deepseek-flash') return 'deepseek-v4-flash';
+  return modelId;
+}
+
+function providerApiKeyEnv(provider: string): string | undefined {
+  const knownProviders: Record<string, string> = {
+    openai: 'OPENAI_API_KEY',
+    anthropic: 'ANTHROPIC_API_KEY',
+    deepseek: 'DEEPSEEK_API_KEY',
+    google: 'GEMINI_API_KEY',
+    openrouter: 'OPENROUTER_API_KEY',
+  };
+  return knownProviders[provider] ?? `${provider.replace(/[^a-z0-9]/gi, '_').toUpperCase()}_API_KEY`;
+}
+
+function configureProviderCredential(provider: string): void {
+  const apiKey = process.env.PI_API_KEY;
+  const envName = providerApiKeyEnv(provider);
+  if (apiKey && envName && !process.env[envName]) process.env[envName] = apiKey;
 }
 
 export function createPiPrompt(request: AgentRequest): string {
@@ -30,7 +56,17 @@ export class PiModelPort implements ModelPort {
   async decide(state: AgentState, signal: AbortSignal): Promise<Decision> {
     if (!isPiAdapterConfigured()) throw new Error('Pi provider is not configured; use AI_MODE=fallback for mock runs');
     signal.throwIfAborted();
+    const provider = process.env.PI_PROVIDER as string;
+    const configuredModelId = process.env.PI_MODEL as string;
+    const modelId = resolvePiModelId(provider, configuredModelId);
+    configureProviderCredential(provider);
+    const authPath = process.env.PI_AUTH_PATH ?? path.resolve(process.cwd(), 'data/pi-auth.json');
+    const modelRuntime = await ModelRuntime.create({ refreshOnCreate: false, authPath });
+    const model = modelRuntime.getModel(provider, modelId);
+    if (!model) throw new Error(`Pi model is not available: ${provider}/${modelId}`);
     const { session } = await createAgentSession({
+      modelRuntime,
+      model,
       noTools: 'all',
       tools: [],
       sessionManager: SessionManager.inMemory(),

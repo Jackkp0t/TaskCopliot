@@ -5,6 +5,7 @@ dist/
 coverage/
 data/*.db
 data/*.db-*
+data/pi-auth.json
 .superpowers/
 .vite/
 .npm-cache/
