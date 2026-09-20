@@ -13,20 +13,20 @@ AI-LLM / 全栈开发
 
 ## 已实现功能
 
-- [x] 任务 CREATE / READ / UPDATE / DELETE
-- [x] SQLite 持久化
-- [x] 状态、优先级、标签、分类筛选
-- [x] 搜索、排序和分页
-- [x] 自然语言任务草稿生成
-- [x] 截止日期、优先级、标签和分类提取
-- [x] 任务拆解草稿与确认后批量创建
-- [x] 每日/每周任务摘要
-- [x] Mock/Fallback AI 运行模式
-- [x] Pi Agent SDK 真实模型适配接口
-- [x] SSE Agent Run 事件回放
-- [x] 结构化 JSON 日志与敏感信息脱敏
-- [x] 单元测试和集成测试
-- [x] React 响应式任务仪表盘
+- [X] 任务 CREATE / READ / UPDATE / DELETE
+- [X] SQLite 持久化
+- [X] 状态、优先级、标签、分类筛选
+- [X] 搜索、排序和分页
+- [X] 自然语言任务草稿生成
+- [X] 截止日期、优先级、标签和分类提取
+- [X] 任务拆解草稿与确认后批量创建
+- [X] 每日/每周任务摘要
+- [X] Mock/Fallback AI 运行模式
+- [X] Pi Agent SDK 真实模型适配接口
+- [X] SSE Agent Run 事件回放
+- [X] 结构化 JSON 日志与敏感信息脱敏
+- [X] 单元测试和集成测试
+- [X] React 响应式任务仪表盘
 
 ## 配置与运行说明
 
