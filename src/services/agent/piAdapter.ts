@@ -15,7 +15,7 @@ export function createPiPrompt(request: AgentRequest): string {
     `Context: ${JSON.stringify({ task: request.task, tasks: request.tasks, timezone: request.timezone })}`,
     'For parse_task return {"kind":"task_draft","data":{"title":"","description":"","priority":"low|medium|high","tags":[],"category":"","due_at":""}}.',
     'For decompose_task return {"kind":"subtask_drafts","data":{"subtasks":[]}}.',
-    'For summarize return {"kind":"summary","data":{"summary":"","statistics":{},"highlights":[],"overdue":[]}}.',
+    'For summarize, identify tasks belonging to today in the requested timezone using due_at, created_at, or updated_at. Return what the user completed and what remains unfinished. Return {"kind":"summary","data":{"summary":"今天做了：...。还没做：...。","statistics":{"todayTotal":0,"completedToday":0,"unfinishedToday":0},"completedTasks":[],"unfinishedTasks":[],"highlights":[],"overdue":[]}}.',
   ].join('\n');
 }
 

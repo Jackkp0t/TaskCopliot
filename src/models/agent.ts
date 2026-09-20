@@ -23,4 +23,4 @@ export interface TaskDraft {
 export type AgentResult =
   | { kind: 'task_draft'; data: TaskDraft }
   | { kind: 'subtask_drafts'; data: { subtasks: TaskDraft[] } }
-  | { kind: 'summary'; data: { summary: string; statistics: Record<string, number>; highlights: Task[]; overdue: Task[] } };
+  | { kind: 'summary'; data: { summary: string; statistics: Record<string, number>; completedTasks: Task[]; unfinishedTasks: Task[]; highlights: Task[]; overdue: Task[] } };

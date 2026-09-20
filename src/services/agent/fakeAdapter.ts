@@ -50,6 +50,29 @@ function cleanTitle(input: string): string {
     .trim() || '新任务';
 }
 
+function dateKey(value: string | Date, timezone = 'Asia/Shanghai'): string | undefined {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return undefined;
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const year = parts.find((part) => part.type === 'year')?.value;
+  const month = parts.find((part) => part.type === 'month')?.value;
+  const day = parts.find((part) => part.type === 'day')?.value;
+  return year && month && day ? `${year}-${month}-${day}` : undefined;
+}
+
+function belongsToToday(task: TaskDraft & { created_at?: string; updated_at?: string }, now: Date, timezone?: string): boolean {
+  const today = dateKey(now, timezone);
+  if (!today) return false;
+  return [task.due_at, task.created_at, task.updated_at]
+    .filter((value): value is string => Boolean(value))
+    .some((value) => dateKey(value, timezone) === today);
+}
+
 function parseTask(request: AgentRequest): AgentResult {
   const input = request.input?.trim() ?? '';
   return {
@@ -81,20 +104,25 @@ export function resolveFakeResult(request: AgentRequest): AgentResult {
     };
   }
   const tasks = request.tasks ?? [];
+  const todayTasks = tasks.filter((task) => belongsToToday(task, request.now ?? new Date(), request.timezone));
+  const completedTasks = todayTasks.filter((task) => task.status === 'completed');
+  const unfinishedTasks = todayTasks.filter((task) => task.status !== 'completed');
   const statistics = {
-    total: tasks.length,
-    completed: tasks.filter((task) => task.status === 'completed').length,
-    inProgress: tasks.filter((task) => task.status === 'in_progress').length,
-    pending: tasks.filter((task) => task.status === 'pending').length,
-    highPriority: tasks.filter((task) => task.priority === 'high').length,
+    todayTotal: todayTasks.length,
+    completedToday: completedTasks.length,
+    unfinishedToday: unfinishedTasks.length,
   };
+  const completedTitles = completedTasks.map((task) => task.title).join('、') || '暂无';
+  const unfinishedTitles = unfinishedTasks.map((task) => task.title).join('、') || '暂无';
   return {
     kind: 'summary',
     data: {
-      summary: `当前范围共有 ${tasks.length} 个任务，其中 ${statistics.highPriority} 个高优先级任务。`,
+      summary: `今天做了：${completedTitles}。还没做：${unfinishedTitles}。`,
       statistics,
-      highlights: tasks.filter((task) => task.priority === 'high').slice(0, 5),
-      overdue: tasks.filter((task) => task.due_at && new Date(task.due_at) < (request.now ?? new Date()) && task.status !== 'completed'),
+      completedTasks,
+      unfinishedTasks,
+      highlights: unfinishedTasks.filter((task) => task.priority === 'high').slice(0, 5),
+      overdue: unfinishedTasks.filter((task) => task.due_at && new Date(task.due_at) < (request.now ?? new Date())),
     },
   };
 }

@@ -11,7 +11,7 @@ export function App() {
   const [tasks, setTasks] = useState<ClientTask[]>([]);
   const [search, setSearch] = useState('');
   const [draft, setDraft] = useState<Partial<ClientTask> & { title: string }>();
-  const [summary, setSummary] = useState<{ summary: string; statistics: Record<string, number> }>();
+  const [summary, setSummary] = useState<{ summary: string; statistics: Record<string, number>; completedTasks: Array<Pick<ClientTask, 'id' | 'title'>>; unfinishedTasks: Array<Pick<ClientTask, 'id' | 'title'>> }>();
   const [decomposition, setDecomposition] = useState<Array<Partial<ClientTask> & { title: string }>>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');

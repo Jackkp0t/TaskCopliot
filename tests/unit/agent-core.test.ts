@@ -28,16 +28,28 @@ describe('mock agent core', () => {
     const core = new AgentCore(new FakeModelPort());
     const signal = new AbortController().signal;
     const decomposition = await core.run({ mode: 'decompose_task', input: '准备产品发布', now: new Date() }, signal);
+    const today = new Date('2026-09-21T10:00:00+08:00');
     const summary = await core.run({
       mode: 'summarize',
-      tasks: [{ id: '1', title: '发布', status: 'pending', priority: 'high', tags: [], created_at: '', updated_at: '' }],
-      now: new Date(),
+      timezone: 'Asia/Shanghai',
+      tasks: [
+        { id: '1', title: '完成报告', status: 'completed', priority: 'high', tags: [], created_at: '2026-09-21T01:00:00.000Z', updated_at: '2026-09-21T02:00:00.000Z' },
+        { id: '2', title: '回复客户', status: 'pending', priority: 'medium', tags: [], created_at: '2026-09-21T03:00:00.000Z', updated_at: '2026-09-21T03:00:00.000Z', due_at: '2026-09-21T10:00:00.000Z' },
+        { id: '3', title: '旧任务', status: 'pending', priority: 'low', tags: [], created_at: '2026-09-20T03:00:00.000Z', updated_at: '2026-09-20T03:00:00.000Z' },
+      ],
+      now: today,
     }, signal);
 
     expect(decomposition.kind).toBe('subtask_drafts');
     expect((decomposition.data as { subtasks: unknown[] }).subtasks.length).toBeGreaterThan(1);
     expect(summary.kind).toBe('summary');
-    expect((summary.data as unknown as { statistics: { total: number } }).statistics.total).toBe(1);
+    expect(summary.data).toMatchObject({
+      statistics: { todayTotal: 2, completedToday: 1, unfinishedToday: 1 },
+      completedTasks: [expect.objectContaining({ title: '完成报告' })],
+      unfinishedTasks: [expect.objectContaining({ title: '回复客户' })],
+    });
+    expect((summary.data as unknown as { summary: string }).summary).toContain('今天做了：完成报告');
+    expect((summary.data as unknown as { summary: string }).summary).toContain('还没做：回复客户');
   });
 });
 
