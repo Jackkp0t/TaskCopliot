@@ -19,24 +19,24 @@ AI-LLM / Full Stack
 
 ## Implemented Features
 
-- [x] Task CRUD: create, read, update, and delete
-- [x] SQLite persistence
-- [x] Task status, priority, category, tag, search, sorting, and pagination
-- [x] Manual task creation
-- [x] Natural-language task drafting
-- [x] AI extraction of title, description, priority, category, tags, and due date
-- [x] Editable AI task confirmation dialog
-- [x] Human confirmation gate before an AI draft is written to the database
-- [x] Common categories: Work, Life, Study, Health, Finance, Personal, Other
-- [x] Task decomposition with editable subtasks and batch confirmation
-- [x] Today's summary: what was completed and what remains unfinished
-- [x] Sidebar views for all tasks, this week's tasks, and completed tasks
-- [x] Mock/fallback AI mode for local development
-- [x] Real Pi Agent SDK model adapter driven by `.env`
-- [x] SSE Agent Run event replay
-- [x] Structured JSON request logs with sensitive-field redaction
-- [x] Unit, integration, and client tests
-- [x] Responsive React dashboard
+- [X] Task CRUD: create, read, update, and delete
+- [X] SQLite persistence
+- [X] Task status, priority, category, tag, search, sorting, and pagination
+- [X] Manual task creation
+- [X] Natural-language task drafting
+- [X] AI extraction of title, description, priority, category, tags, and due date
+- [X] Editable AI task confirmation dialog
+- [X] Human confirmation gate before an AI draft is written to the database
+- [X] Common categories: Work, Life, Study, Health, Finance, Personal, Other
+- [X] Task decomposition with editable subtasks and batch confirmation
+- [X] Today's summary: what was completed and what remains unfinished
+- [X] Sidebar views for all tasks, this week's tasks, and completed tasks
+- [X] Mock/fallback AI mode for local development
+- [X] Real Pi Agent SDK model adapter driven by `.env`
+- [X] SSE Agent Run event replay
+- [X] Structured JSON request logs with sensitive-field redaction
+- [X] Unit, integration, and client tests
+- [X] Responsive React dashboard
 
 ## Project Structure
 
