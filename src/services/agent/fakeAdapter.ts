@@ -21,7 +21,12 @@ function inferCategory(input: string): string | undefined {
   if (/会议|开会|客户|项目|报告/.test(input)) return '工作';
   if (/学习|课程|复习/.test(input)) return '学习';
   if (/锻炼|运动|跑步/.test(input)) return '健康';
-  return undefined;
+  return '其他';
+}
+
+function inferDescription(input: string): string | undefined {
+  const description = input.trim();
+  return description || undefined;
 }
 
 function inferDueAt(input: string, now: Date): string | undefined {
@@ -51,6 +56,7 @@ function parseTask(request: AgentRequest): AgentResult {
     kind: 'task_draft',
     data: {
       title: cleanTitle(input),
+      description: inferDescription(input),
       priority: inferPriority(input),
       tags: inferTags(input),
       category: inferCategory(input),

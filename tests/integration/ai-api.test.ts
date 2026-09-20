@@ -15,6 +15,13 @@ describe('mock ai api', () => {
     expect(created.body.runId).toBeTruthy();
     expect(created.body.status).toBe('completed');
     expect(created.body.result.kind).toBe('task_draft');
+    expect(created.body.result.data).toMatchObject({
+      title: '购买日用品',
+      description: '提醒我明天下午3点购买日用品',
+      priority: 'medium',
+      category: '生活',
+      due_at: '2026-09-22T07:00:00.000Z',
+    });
 
     const status = await request(app).get(`/api/ai/runs/${created.body.runId}`).expect(200);
     expect(status.body.status).toBe('completed');

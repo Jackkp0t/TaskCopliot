@@ -16,6 +16,7 @@ describe('mock agent core', () => {
     expect(result.kind).toBe('task_draft');
     expect(result.data).toMatchObject({
       title: '购买日用品',
+      description: '提醒我明天下午3点购买日用品',
       priority: 'medium',
       tags: ['购物'],
       category: '生活',
