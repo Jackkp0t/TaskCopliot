@@ -7,18 +7,40 @@ import { TaskDecomposer } from './components/TaskDecomposer';
 import { TaskForm } from './components/TaskForm';
 import './styles.css';
 
+type TaskView = 'all' | 'week' | 'completed';
+
+function isInCurrentWeek(value: string | undefined, reference = new Date()): boolean {
+  if (!value) return false;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return false;
+  const start = new Date(reference);
+  start.setHours(0, 0, 0, 0);
+  const dayFromMonday = (start.getDay() + 6) % 7;
+  start.setDate(start.getDate() - dayFromMonday);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 7);
+  return date >= start && date < end;
+}
+
 export function App() {
   const [tasks, setTasks] = useState<ClientTask[]>([]);
   const [search, setSearch] = useState('');
   const [draft, setDraft] = useState<Partial<ClientTask> & { title: string }>();
   const [summary, setSummary] = useState<{ summary: string; statistics: Record<string, number>; completedTasks: Array<Pick<ClientTask, 'id' | 'title'>>; unfinishedTasks: Array<Pick<ClientTask, 'id' | 'title'>> }>();
   const [decomposition, setDecomposition] = useState<Array<Partial<ClientTask> & { title: string }>>([]);
+  const [view, setView] = useState<TaskView>('all');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
   const loadTasks = async () => { try { setTasks((await api.listTasks(search)).items); setError(''); } catch (err) { setError(err instanceof Error ? err.message : '任务加载失败'); } };
   useEffect(() => { void loadTasks(); }, [search]);
   const openTasks = useMemo(() => tasks.filter((task) => task.status !== 'completed').length, [tasks]);
+  const visibleTasks = useMemo(() => {
+    if (view === 'completed') return tasks.filter((task) => task.status === 'completed');
+    if (view === 'week') return tasks.filter((task) => isInCurrentWeek(task.due_at ?? task.created_at));
+    return tasks;
+  }, [tasks, view]);
+  const viewTitle = view === 'completed' ? '已完成任务' : view === 'week' ? '本周节奏' : '待办任务';
 
   const parse = async (input: string) => { setBusy(true); try { const result = await api.aiRun({ mode: 'parse_task', input, timezone: 'Asia/Shanghai' }); setDraft(result.result?.data as Partial<ClientTask> & { title: string }); } catch (err) { setError(err instanceof Error ? err.message : '智能整理失败'); } finally { setBusy(false); } };
   const confirmDraft = async (value: Partial<ClientTask> & { title: string }) => { setBusy(true); try { await api.createTask(value); setDraft(undefined); await loadTasks(); } catch (err) { setError(err instanceof Error ? err.message : '保存任务失败'); } finally { setBusy(false); } };
@@ -30,5 +52,5 @@ export function App() {
   const editTask = async (task: ClientTask, title: string) => { if (!title.trim() || title === task.title) return; try { await api.updateTask(task.id, { title }); await loadTasks(); } catch (err) { setError(err instanceof Error ? err.message : '任务更新失败'); } };
   const summarize = async () => { setBusy(true); try { const result = await api.aiRun({ mode: 'summarize' }); setSummary(result.result?.data as typeof summary); } catch (err) { setError(err instanceof Error ? err.message : '摘要生成失败'); } finally { setBusy(false); } };
 
-  return <div className="app-shell"><aside className="sidebar"><div className="brand-mark">作</div><div className="brand-name">作息簿<span>smart planner</span></div><nav><a className="active">任务总览 <b>{openTasks}</b></a><a>本周节奏</a><a>已完成</a></nav><div className="sidebar-note"><span>今日留白</span><strong>{Math.max(0, 8 - openTasks)}</strong><p>给真正重要的事留一点空间。</p></div></aside><main className="workspace"><header className="topbar"><div><div className="section-kicker">星期一 · 9月21日</div><h1>把今天安排好，<em>再出发。</em></h1></div><div className="avatar">J</div></header><SmartTaskComposer draft={draft} busy={busy} onParse={parse} onConfirm={confirmDraft} onCancel={() => setDraft(undefined)} /><details className="manual-panel"><summary>手动创建任务</summary><TaskForm busy={busy} onSubmit={createManual} /></details><section className="content-grid"><div className="tasks-column"><div className="list-header"><div><div className="section-kicker">当前清单</div><h2>待办任务 <span>{tasks.length}</span></h2></div><input className="search-input" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="搜索任务" /></div>{error && <div className="error-banner">{error}</div>}<TaskDecomposer tasks={decomposition} busy={busy} onChange={(index, title) => setDecomposition(decomposition.map((item, itemIndex) => itemIndex === index ? { ...item, title } : item))} onConfirm={confirmDecomposition} onCancel={() => setDecomposition([])} /><TaskList tasks={tasks} onToggle={toggle} onDelete={remove} onDecompose={decompose} onEdit={editTask} /></div><div className="insight-column"><SummaryPanel summary={summary} busy={busy} onSummarize={summarize} /><div className="tip-card"><span>小提示</span><p>把模糊的想法交给智能输入，再由你确认最后的安排。</p></div></div></section></main></div>;
+  return <div className="app-shell"><aside className="sidebar"><div className="brand-mark">作</div><div className="brand-name">作息簿<span>smart planner</span></div><nav><button type="button" className={view === 'all' ? 'active' : ''} aria-pressed={view === 'all'} onClick={() => setView('all')}>任务总览 <b>{openTasks}</b></button><button type="button" className={view === 'week' ? 'active' : ''} aria-pressed={view === 'week'} onClick={() => setView('week')}>本周节奏</button><button type="button" className={view === 'completed' ? 'active' : ''} aria-pressed={view === 'completed'} onClick={() => setView('completed')}>已完成</button></nav><div className="sidebar-note"><span>今日留白</span><strong>{Math.max(0, 8 - openTasks)}</strong><p>给真正重要的事留一点空间。</p></div></aside><main className="workspace"><header className="topbar"><div><div className="section-kicker">星期一 · 9月21日</div><h1>把今天安排好，<em>再出发。</em></h1></div><div className="avatar">J</div></header><SmartTaskComposer draft={draft} busy={busy} onParse={parse} onConfirm={confirmDraft} onCancel={() => setDraft(undefined)} /><details className="manual-panel"><summary>手动创建任务</summary><TaskForm busy={busy} onSubmit={createManual} /></details><section className="content-grid"><div className="tasks-column"><div className="list-header"><div><div className="section-kicker">当前清单</div><h2>{viewTitle} <span>{visibleTasks.length}</span></h2></div><input className="search-input" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="搜索任务" /></div>{error && <div className="error-banner">{error}</div>}<TaskDecomposer tasks={decomposition} busy={busy} onChange={(index, title) => setDecomposition(decomposition.map((item, itemIndex) => itemIndex === index ? { ...item, title } : item))} onConfirm={confirmDecomposition} onCancel={() => setDecomposition([])} /><TaskList tasks={visibleTasks} onToggle={toggle} onDelete={remove} onDecompose={decompose} onEdit={editTask} /></div><div className="insight-column"><SummaryPanel summary={summary} busy={busy} onSummarize={summarize} /><div className="tip-card"><span>小提示</span><p>把模糊的想法交给智能输入，再由你确认最后的安排。</p></div></div></section></main></div>;
 }
